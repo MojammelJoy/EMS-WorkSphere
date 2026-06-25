@@ -71,10 +71,10 @@ export async function listAttendance(
     }),
   };
 
-  const [data, total] = await Promise.all([
+  const [raw, total] = await Promise.all([
     prisma.attendance.findMany({
       where, skip, take: limit,
-      orderBy: { date: sortOrder },
+      orderBy: { date: sortOrder as "asc" | "desc" },
       include: {
         employee: {
           select: {
@@ -87,6 +87,11 @@ export async function listAttendance(
     }),
     prisma.attendance.count({ where }),
   ]);
+
+  const data = raw.map((a) => {
+    const emp = a.employee as { firstName: string; lastName: string; profileImage?: string | null } & typeof a.employee;
+    return { ...a, employee: { ...emp, name: `${emp.firstName} ${emp.lastName}`, avatar: emp.profileImage } };
+  });
 
   return { data, meta: buildPaginationMeta(total, page, limit) };
 }

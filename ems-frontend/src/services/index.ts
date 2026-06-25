@@ -23,6 +23,8 @@ export const authService = {
     api.post("/auth/forgot-password", data).then((r) => r.data),
   resetPassword: (data: ResetPasswordPayload) =>
     api.post("/auth/reset-password", data).then((r) => r.data),
+  changePassword: (data: { currentPassword: string; newPassword: string; confirmPassword: string }) =>
+    api.put("/auth/change-password", data).then((r) => r.data),
 };
 
 // ── Employees ─────────────────────────────────────────────────────────
@@ -64,7 +66,7 @@ export const employeeService = {
 // ── Departments ───────────────────────────────────────────────────────
 export const departmentService = {
   list: (params?: PaginationParams) =>
-    api.get<PaginatedResponse<Department>>("/departments", { params }).then((r) => r.data),
+    api.get<Department[]>("/departments", { params }).then((r) => r.data),
   get: (id: string) =>
     api.get<Department>(`/departments/${id}`).then((r) => r.data),
   create: (data: CreateDepartmentPayload) =>

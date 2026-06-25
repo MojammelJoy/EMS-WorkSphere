@@ -17,7 +17,7 @@ export const auditLog = ({ action, entity, getEntityId }: AuditOptions) =>
             userId:    req.user.userId,
             action,
             entity,
-            entityId:  getEntityId?.(req) ?? req.params.id,
+            entityId:  getEntityId?.(req) ?? String(req.params.id ?? ""),
             ipAddress: req.ip,
             userAgent: req.headers["user-agent"],
           },

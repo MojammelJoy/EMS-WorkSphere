@@ -30,9 +30,10 @@ export default function AttendancePage() {
   const clockOut = useClockOut();
 
   const isClockedIn = !!today?.checkIn && !today?.checkOut;
-  const records = (attendanceData?.data ?? []).filter((a) =>
-    a.employee.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const records = (attendanceData?.data ?? []).filter((a) => {
+    const name = (a.employee as any).name ?? `${(a.employee as any).firstName ?? ""} ${(a.employee as any).lastName ?? ""}`;
+    return name.toLowerCase().includes(search.toLowerCase());
+  });
 
   const stats = {
     present:  (attendanceData?.data ?? []).filter((a) => a.status === "PRESENT").length,

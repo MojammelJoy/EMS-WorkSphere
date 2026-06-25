@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Check, X, Clock } from "lucide-react";
+import { Plus, Check, X, Clock, CalendarDays } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -14,7 +14,8 @@ import { PageHeader } from "@/components/shared/page-header";
 import { UserAvatar } from "@/components/ui/avatar";
 import { formatDate, timeAgo } from "@/lib/utils";
 import { LEAVE_TYPE_OPTIONS, LEAVE_STATUS_LABELS, LEAVE_TYPE_LABELS } from "@/constants";
-import { useApproveLeave, useRejectLeave, useLeaveRequests, useApplyLeave } from "@/hooks";
+import { useApproveLeave, useRejectLeave, useLeaveRequests, useApplyLeave, useMyLeaveBalance } from "@/hooks";
+import { useAuthStore } from "@/store/auth.store";
 import type { LeaveStatus, LeaveType } from "@/types";
 
 const STATUS_VARIANT: Record<LeaveStatus, React.ComponentProps<typeof Badge>["variant"]> = {
@@ -24,18 +25,7 @@ const STATUS_VARIANT: Record<LeaveStatus, React.ComponentProps<typeof Badge>["va
   CANCELLED: "muted",
 };
 
-const MOCK_LEAVES = [
-  { id: "1", employee: { id: "1", name: "Farhana Akter", designation: "Product Designer", avatar: undefined, department: { id:"1", name:"Engineering", code:"ENG", employeeCount:0, createdAt:"" } }, leaveType: "CASUAL" as LeaveType, startDate: "2025-01-25", endDate: "2025-01-27", days: 3, reason: "Family function in hometown.", status: "PENDING"  as LeaveStatus, appliedAt: new Date(Date.now() - 3 * 3600000).toISOString(), updatedAt: new Date().toISOString() },
-  { id: "2", employee: { id: "2", name: "Rakibul Hasan", designation: "Backend Engineer", avatar: undefined, department: { id:"1", name:"Engineering", code:"ENG", employeeCount:0, createdAt:"" } }, leaveType: "SICK"   as LeaveType, startDate: "2025-01-20", endDate: "2025-01-21", days: 2, reason: "Medical emergency.",         status: "APPROVED" as LeaveStatus, appliedAt: new Date(Date.now() - 2 * 86400000).toISOString(), updatedAt: new Date().toISOString() },
-  { id: "3", employee: { id: "3", name: "Tasnim Jahan",  designation: "HR Partner",       avatar: undefined, department: { id:"5", name:"HR & Admin",  code:"HR",  employeeCount:0, createdAt:"" } }, leaveType: "EARNED" as LeaveType, startDate: "2025-01-28", endDate: "2025-02-01", days: 5, reason: "Annual vacation.",            status: "PENDING"  as LeaveStatus, appliedAt: new Date(Date.now() - 86400000).toISOString(),   updatedAt: new Date().toISOString() },
-];
 
-const BALANCE = [
-  { type: "Casual",  total: 12, used: 5,  remaining: 7  },
-  { type: "Sick",    total: 14, used: 3,  remaining: 11 },
-  { type: "Earned",  total: 20, used: 8,  remaining: 12 },
-  { type: "Unpaid",  total: 30, used: 1,  remaining: 29 },
-];
 
 const schema = z.object({
   leaveType:  z.string().min(1, "Select leave type"),
@@ -46,8 +36,10 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export default function LeavePage() {
+  const { user } = useAuthStore();
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
+  const { data: balanceData } = useMyLeaveBalance(user?.employeeId);
   const [rejectTarget, setRejectTarget] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [rejectError, setRejectError] = useState("");
@@ -85,25 +77,35 @@ export default function LeavePage() {
       <div className="space-y-5">
         {/* Leave balance cards */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {BALANCE.map((b) => (
-            <Card key={b.type}>
-              <CardContent className="py-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{b.type}</p>
-                <div className="mt-2 flex items-end justify-between">
-                  <p className="text-2xl font-semibold text-foreground">{b.remaining}</p>
-                  <p className="text-xs text-muted-foreground mb-1">/{b.total}</p>
-                </div>
-                {/* Progress bar */}
-                <div className="mt-2 h-1.5 w-full rounded-full bg-muted overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-primary transition-all"
-                    style={{ width: `${((b.total - b.used) / b.total) * 100}%` }}
-                  />
-                </div>
-                <p className="mt-1 text-[11px] text-muted-foreground">{b.used} used</p>
-              </CardContent>
-            </Card>
-          ))}
+          {[
+            { key: "casual",  label: "Casual"  },
+            { key: "sick",    label: "Sick"    },
+            { key: "earned",  label: "Earned"  },
+            { key: "unpaid",  label: "Unpaid"  },
+          ].map(({ key, label }) => {
+            const total     = (balanceData as any)?.[key]          ?? 0;
+            const used      = (balanceData as any)?.[`${key}Used`]  ?? 0;
+            const remaining = total - used;
+            const unlimited = total >= 999;
+            return (
+              <Card key={key}>
+                <CardContent className="py-4">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+                  <div className="mt-2 flex items-end justify-between">
+                    <p className="text-2xl font-semibold text-foreground">{unlimited ? "∞" : remaining}</p>
+                    {!unlimited && <p className="text-xs text-muted-foreground mb-1">/{total}</p>}
+                  </div>
+                  <div className="mt-2 h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all"
+                      style={{ width: unlimited ? "100%" : total > 0 ? `${(remaining / total) * 100}%` : "0%" }}
+                    />
+                  </div>
+                  <p className="mt-1 text-[11px] text-muted-foreground">{used} used</p>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         {/* Requests */}
@@ -227,8 +229,8 @@ export default function LeavePage() {
               {errors.leaveType && <p className="mt-1 text-xs text-destructive">{errors.leaveType.message}</p>}
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <Input {...register("startDate")} label="Start Date *" type="date" error={errors.startDate?.message} />
-              <Input {...register("endDate")}   label="End Date *"   type="date" error={errors.endDate?.message} />
+              <Input {...register("startDate")} label="Start Date *" type="date" error={errors.startDate?.message} className="date-input" />
+              <Input {...register("endDate")}   label="End Date *"   type="date" error={errors.endDate?.message}   className="date-input" />
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1.5">Reason *</label>

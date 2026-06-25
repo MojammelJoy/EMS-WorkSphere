@@ -34,12 +34,12 @@ router.get("/", authorize("ADMIN", "HR"), asyncHandler(async (req, res) => {
 
 router.get("/monthly/:employeeId", asyncHandler(async (req, res) => {
   const { month, year } = req.query as { month: string; year: string };
-  sendSuccess(res, await getMonthlyAttendance(req.params.employeeId, +month, +year), "Monthly attendance");
+  sendSuccess(res, await getMonthlyAttendance(String(req.params.employeeId), +month, +year), "Monthly attendance");
 }));
 
 router.get("/summary/:employeeId", asyncHandler(async (req, res) => {
   const { month, year } = req.query as { month: string; year: string };
-  sendSuccess(res, await getAttendanceSummary(req.params.employeeId, +month, +year), "Attendance summary");
+  sendSuccess(res, await getAttendanceSummary(String(req.params.employeeId), +month, +year), "Attendance summary");
 }));
 
 async function getEmployeeId(userId: string): Promise<string> {

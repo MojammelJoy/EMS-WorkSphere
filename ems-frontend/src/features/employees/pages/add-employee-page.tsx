@@ -39,8 +39,7 @@ export default function AddEmployeePage() {
   const isEdit   = !!id;
 
   const { data: empData, isLoading: empLoading } = useEmployee(id ?? "");
-  const { data: deptData }                        = useDepartments();
-  const departments                               = deptData?.data ?? [];
+  const { data: departments = [] }                = useDepartments();
   const create                                    = useCreateEmployee();
   const update                                    = useUpdateEmployee(id ?? "");
 
@@ -86,9 +85,9 @@ export default function AddEmployeePage() {
     };
 
     if (isEdit) {
-      update.mutate(payload, { onSuccess: () => navigate(`/employees/${id}`) });
+      update.mutate(payload as any, { onSuccess: () => navigate(`/employees/${id}`) });
     } else {
-      create.mutate(payload, { onSuccess: () => navigate("/employees") });
+      create.mutate(payload as any, { onSuccess: () => navigate("/employees") });
     }
   };
 

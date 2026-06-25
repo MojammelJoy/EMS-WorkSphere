@@ -52,13 +52,13 @@ export const CLOUDINARY = {
 } as const;
 
 export const LEAVE_DEFAULTS = {
-  CASUAL: 12,
-  SICK: 14,
-  EARNED: 20,
-  MATERNITY: 90,
-  PATERNITY: 10,
-  UNPAID: 999,
-  COMPENSATORY: 0,
+  casual:       12,
+  sick:         14,
+  earned:       20,
+  maternity:    90,
+  paternity:    10,
+  unpaid:       999,
+  compensatory: 0,
 } as const;
 
 export const ATTENDANCE = {

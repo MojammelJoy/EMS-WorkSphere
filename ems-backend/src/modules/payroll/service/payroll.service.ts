@@ -17,7 +17,7 @@ export async function listPayroll(
     ...(query.status && { status: query.status as "DRAFT" | "PROCESSED" | "PAID" }),
   };
 
-  const [data, total] = await Promise.all([
+  const [raw, total] = await Promise.all([
     prisma.payroll.findMany({
       where, skip, take: limit,
       orderBy: { createdAt: "desc" },
@@ -33,6 +33,11 @@ export async function listPayroll(
     }),
     prisma.payroll.count({ where }),
   ]);
+
+  const data = raw.map((p) => ({
+    ...p,
+    employee: { ...p.employee, name: `${p.employee.firstName} ${p.employee.lastName}` },
+  }));
 
   return { data, meta: buildPaginationMeta(total, page, limit) };
 }

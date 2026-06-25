@@ -119,7 +119,3 @@ export async function changePasswordService(userId: string, current: string, new
   await prisma.user.update({ where: { id: userId }, data: { password: hashed } });
 }
 
-export interface LoginPayload {
-  email: string;
-  password: string;
-}

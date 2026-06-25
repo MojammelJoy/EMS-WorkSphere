@@ -22,19 +22,14 @@ const STATUS_VARIANT: Record<PayrollStatus, React.ComponentProps<typeof Badge>["
 };
 
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-const YEARS  = ["2025","2024","2023"];
+const CUR_YEAR = new Date().getFullYear();
+const YEARS = Array.from({ length: 4 }, (_, i) => String(CUR_YEAR - i));
 
-const MOCK_PAYROLL = [
-  { id: "1", employee: { id:"1", name:"Farhana Akter",   designation:"Product Designer", department:{ id:"1", name:"Engineering", code:"ENG", employeeCount:0, createdAt:"" }, employeeId:"EMP-1042" }, month:1, year:2025, basicSalary:98000, houseRent:39200, medicalAllowance:9800, transport:5000, bonus:0, overtime:2450, grossSalary:154450, taxDeduction:7722, providentFund:9800, loanDeduction:0, otherDeductions:0, totalDeductions:17522, netSalary:136928, status:"PAID"      as PayrollStatus, paidAt:"2025-01-31", createdAt:"" },
-  { id: "2", employee: { id:"2", name:"Rakibul Hasan",   designation:"Backend Engineer", department:{ id:"1", name:"Engineering", code:"ENG", employeeCount:0, createdAt:"" }, employeeId:"EMP-1043" }, month:1, year:2025, basicSalary:86500, houseRent:34600, medicalAllowance:8650, transport:5000, bonus:0, overtime:0,    grossSalary:134750, taxDeduction:6737, providentFund:8650, loanDeduction:5000, otherDeductions:0, totalDeductions:20387, netSalary:114363, status:"PAID"      as PayrollStatus, paidAt:"2025-01-31", createdAt:"" },
-  { id: "3", employee: { id:"3", name:"Tasnim Jahan",    designation:"HR Partner",       department:{ id:"5", name:"HR & Admin",  code:"HR",  employeeCount:0, createdAt:"" }, employeeId:"EMP-1044" }, month:1, year:2025, basicSalary:74200, houseRent:29680, medicalAllowance:7420, transport:5000, bonus:0, overtime:0,    grossSalary:116300, taxDeduction:5815, providentFund:7420, loanDeduction:0, otherDeductions:0, totalDeductions:13235, netSalary:103065, status:"PROCESSED" as PayrollStatus, createdAt:"" },
-  { id: "4", employee: { id:"4", name:"Imran Chowdhury", designation:"Sales Manager",    department:{ id:"2", name:"Sales",       code:"SAL", employeeCount:0, createdAt:"" }, employeeId:"EMP-1045" }, month:1, year:2025, basicSalary:91000, houseRent:36400, medicalAllowance:9100, transport:5000, bonus:10000, overtime:0, grossSalary:151500, taxDeduction:7575, providentFund:9100, loanDeduction:0, otherDeductions:0, totalDeductions:16675, netSalary:134825, status:"DRAFT"     as PayrollStatus, createdAt:"" },
-];
 
 export default function PayrollPage() {
-  const [month, setMonth] = useState("1");
-  const [year, setYear] = useState("2025");
-  const [selectedPayroll, setSelectedPayroll] = useState<typeof MOCK_PAYROLL[0] | null>(null);
+  const [month, setMonth] = useState(String(new Date().getMonth() + 1));
+  const [year, setYear]   = useState(String(new Date().getFullYear()));
+  const [selectedPayroll, setSelectedPayroll] = useState<any | null>(null);
   const [processOpen, setProcessOpen] = useState(false);
   const [processMonth, setProcessMonth] = useState(String(new Date().getMonth() + 1));
   const [processYear, setProcessYear]   = useState(String(new Date().getFullYear()));
@@ -49,7 +44,7 @@ export default function PayrollPage() {
   });
 
   const { data: payrollData, isLoading } = usePayrollList({ month: Number(month), year: Number(year) });
-  const payrolls = payrollData?.data ?? MOCK_PAYROLL;
+  const payrolls = payrollData?.data ?? [];
 
   const totalNet        = payrolls.reduce((s, p) => s + p.netSalary, 0);
   const totalGross      = payrolls.reduce((s, p) => s + p.grossSalary, 0);
@@ -132,7 +127,9 @@ export default function PayrollPage() {
                 <tbody className="divide-y divide-border">
                   {isLoading ? Array.from({ length: 4 }).map((_, i) => (
                     <tr key={i}><td colSpan={6} className="px-5 py-4"><div className="h-4 animate-pulse rounded bg-muted" /></td></tr>
-                  )) : payrolls.map((p) => (
+                  )) : payrolls.length === 0 ? (
+                    <tr><td colSpan={6} className="px-5 py-10 text-center text-sm text-muted-foreground">No payroll records for {MONTHS[Number(month)-1]} {year}. Click "Process Payroll" to generate.</td></tr>
+                  ) : payrolls.map((p) => (
                     <tr key={p.id} className="hover:bg-muted/30 transition-colors">
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">

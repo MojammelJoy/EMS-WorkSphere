@@ -23,20 +23,20 @@ router.post("/", validate(applyLeaveSchema), asyncHandler(async (req: AuthReques
 }));
 
 router.patch("/:id/approve", authorize("ADMIN", "HR"), asyncHandler(async (req: AuthRequest, res) => {
-  sendSuccess(res, await approveLeave(req.params.id, req.user!.userId), "Leave approved");
+  sendSuccess(res, await approveLeave(String(req.params.id), req.user!.userId), "Leave approved");
 }));
 
 router.patch("/:id/reject", authorize("ADMIN", "HR"), validate(rejectLeaveSchema), asyncHandler(async (req: AuthRequest, res) => {
-  sendSuccess(res, await rejectLeave(req.params.id, req.user!.userId, req.body.reason as string), "Leave rejected");
+  sendSuccess(res, await rejectLeave(String(req.params.id), req.user!.userId, req.body.reason as string), "Leave rejected");
 }));
 
 router.patch("/:id/cancel", asyncHandler(async (req: AuthRequest, res) => {
   const empId = await getEmpId(req.user!.userId);
-  sendSuccess(res, await cancelLeave(req.params.id, empId), "Leave cancelled");
+  sendSuccess(res, await cancelLeave(String(req.params.id), empId), "Leave cancelled");
 }));
 
 router.get("/balance/:employeeId", asyncHandler(async (req, res) => {
-  sendSuccess(res, await getLeaveBalance(req.params.employeeId), "Leave balance");
+  sendSuccess(res, await getLeaveBalance(String(req.params.employeeId)), "Leave balance");
 }));
 
 async function getEmpId(userId: string) {

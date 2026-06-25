@@ -42,19 +42,19 @@ export async function applyLeave(employeeId: string, data: ApplyLeaveInput) {
 
   const leave = await prisma.leaveRequest.create({
     data: {
-      employeeId, leaveType: data.leaveType,
+      employeeId,
+      leaveType: data.leaveType as import("@prisma/client").LeaveType,
       startDate: start, endDate: end, days, reason: data.reason,
     },
-    include: { employee: { select: { firstName: true, lastName: true, department: { select: { name: true } } } } },
   });
 
-  // Notify HR/Admin
+  const empInfo = await prisma.employee.findUnique({ where: { id: employeeId }, select: { firstName: true, lastName: true } });
   const hrUsers = await prisma.user.findMany({ where: { role: { in: ["ADMIN", "HR"] }, isActive: true } });
   await Promise.allSettled(hrUsers.map((u) =>
     createNotification({
       userId:  u.id,
       title:   "New Leave Request",
-      message: `${leave.employee.firstName} ${leave.employee.lastName} requested ${data.leaveType} leave`,
+      message: `${empInfo?.firstName ?? ""} ${empInfo?.lastName ?? ""} requested ${data.leaveType} leave`,
       type:    "LEAVE_REQUEST",
       link:    "/leave",
     })
@@ -73,10 +73,10 @@ export async function listLeaveRequests(
     ...(query.employeeId && { employeeId: query.employeeId }),
   };
 
-  const [data, total] = await Promise.all([
+  const [raw, total] = await Promise.all([
     prisma.leaveRequest.findMany({
       where, skip, take: limit,
-      orderBy: { appliedAt: sortOrder },
+      orderBy: { createdAt: sortOrder as "asc" | "desc" },
       include: {
         employee: {
           select: {
@@ -89,6 +89,11 @@ export async function listLeaveRequests(
     }),
     prisma.leaveRequest.count({ where }),
   ]);
+
+  const data = raw.map((l) => {
+    const emp = l.employee as { firstName: string; lastName: string; profileImage?: string | null } & typeof l.employee;
+    return { ...l, employee: { ...emp, name: `${emp.firstName} ${emp.lastName}`, avatar: emp.profileImage } };
+  });
 
   return { data, meta: buildPaginationMeta(total, page, limit) };
 }
@@ -104,19 +109,25 @@ export async function approveLeave(id: string, approvedById: string) {
   const typeKey = leave.leaveType.toLowerCase() as string;
   const usedKey = `${typeKey}Used`;
 
+  const year = leave.startDate.getFullYear();
+  const balance = await prisma.leaveBalance.findFirst({
+    where: { employeeId: leave.employeeId, year },
+  });
+
   await prisma.$transaction([
     prisma.leaveRequest.update({
       where: { id },
       data:  { status: "APPROVED", approvedById, reviewedAt: new Date() },
     }),
-    prisma.leaveBalance.update({
-      where: { employeeId: leave.employeeId },
+    ...(balance ? [prisma.leaveBalance.update({
+      where: { id: balance.id },
       data:  { [usedKey]: { increment: leave.days } },
-    }),
+    })] : []),
   ]);
 
   // Notify employee
-  const empUser = await prisma.user.findUnique({ where: { employee: { id: leave.employeeId } } });
+  const empRecord = await prisma.employee.findUnique({ where: { id: leave.employeeId }, select: { userId: true } });
+  const empUser = empRecord ? await prisma.user.findUnique({ where: { id: empRecord.userId } }) : null;
   if (empUser) {
     await createNotification({
       userId:  empUser.id,
@@ -139,12 +150,11 @@ export async function approveLeave(id: string, approvedById: string) {
 }
 
 export async function rejectLeave(id: string, approvedById: string, reason: string) {
-  const leave = await prisma.leaveRequest.findUnique({
-    where: { id },
-    include: { employee: { select: { email: true, firstName: true } } },
-  });
+  const leave = await prisma.leaveRequest.findUnique({ where: { id } });
   if (!leave) throw ApiError.notFound("Leave request not found");
   if (leave.status !== "PENDING") throw ApiError.badRequest("Leave already processed");
+
+  const empRec = await prisma.employee.findUnique({ where: { id: leave.employeeId }, select: { email: true, firstName: true } });
 
   await prisma.leaveRequest.update({
     where: { id },
@@ -152,9 +162,9 @@ export async function rejectLeave(id: string, approvedById: string, reason: stri
   });
 
   sendEmail({
-    to:      leave.employee.email,
+    to:      empRec?.email ?? "",
     subject: "Leave Request Update",
-    html:    emailTemplates.leaveRejected(leave.employee.firstName, leave.leaveType, reason),
+    html:    emailTemplates.leaveRejected(empRec?.firstName ?? "", leave.leaveType, reason),
   }).catch(() => {});
 
   return leave;

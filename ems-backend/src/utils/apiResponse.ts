@@ -5,7 +5,7 @@ export function sendSuccess<T>(
   res: Response,
   data: T,
   message = "Success",
-  statusCode = HTTP_STATUS.OK
+  statusCode: number = HTTP_STATUS.OK
 ) {
   return res.status(statusCode).json({ success: true, message, data });
 }

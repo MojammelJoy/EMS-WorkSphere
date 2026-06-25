@@ -1,4 +1,5 @@
 import express from "express";
+import path from "path";
 import helmet from "helmet";
 import cors from "cors";
 import morgan from "morgan";
@@ -18,8 +19,12 @@ const app = express();
 
 /* ── Security ── */
 app.use(helmet());
+const allowedOrigins = (process.env.CORS_ORIGINS ?? config.clientUrl).split(",").map((o) => o.trim());
 app.use(cors({
-  origin:      config.clientUrl,
+  origin:      (origin, cb) => {
+    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+    cb(new Error(`CORS: origin ${origin} not allowed`));
+  },
   credentials: true,
   methods:     ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
@@ -49,6 +54,9 @@ app.use(compression());
 app.use(morgan(config.isDev ? "dev" : "combined", {
   stream: { write: (msg) => logger.info(msg.trim()) },
 }));
+
+/* ── Static Files (local uploads) ── */
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 /* ── Health ── */
 app.get("/health", (_req, res) => {

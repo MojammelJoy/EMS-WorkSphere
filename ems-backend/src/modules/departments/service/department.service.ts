@@ -13,8 +13,9 @@ export async function listDepartments() {
     orderBy: { name: "asc" },
   });
 
-  await cache.set(CACHE_KEYS.DEPARTMENTS, departments, CACHE_TTL.MEDIUM);
-  return departments;
+  const mapped = departments.map(({ _count, ...d }) => ({ ...d, employeeCount: _count.employees }));
+  await cache.set(CACHE_KEYS.DEPARTMENTS, mapped, CACHE_TTL.MEDIUM);
+  return mapped;
 }
 
 export async function createDepartment(data: { name: string; code: string; description?: string }) {

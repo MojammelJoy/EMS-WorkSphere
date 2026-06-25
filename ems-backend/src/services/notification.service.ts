@@ -3,16 +3,17 @@ import { NotificationType } from "@prisma/client";
 import { getIO } from "@/sockets";
 
 interface CreateNotificationInput {
-  userId:   string;
-  title:    string;
-  message:  string;
-  type:     NotificationType;
-  link?:    string;
-  metadata?: Record<string, unknown>;
+  userId:  string;
+  title:   string;
+  message: string;
+  type:    NotificationType;
+  link?:   string;
 }
 
 export async function createNotification(input: CreateNotificationInput) {
-  const notification = await prisma.notification.create({ data: input });
+  const notification = await prisma.notification.create({
+    data: { userId: input.userId, title: input.title, message: input.message, type: input.type, link: input.link },
+  });
 
   // Emit real-time event via Socket.IO
   try {

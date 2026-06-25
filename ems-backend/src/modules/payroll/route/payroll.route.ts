@@ -27,7 +27,7 @@ router.get("/my", asyncHandler(async (req: AuthRequest, res) => {
 }));
 
 router.patch("/:id/paid", authorize("ADMIN"), asyncHandler(async (req, res) => {
-  sendSuccess(res, await markAsPaid(req.params.id), "Marked as paid");
+  sendSuccess(res, await markAsPaid(String(req.params.id)), "Marked as paid");
 }));
 
 export default router;

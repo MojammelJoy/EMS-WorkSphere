@@ -7,7 +7,7 @@ export class ApiError extends Error {
 
   constructor(
     message: string,
-    statusCode = HTTP_STATUS.INTERNAL_ERROR,
+    statusCode: number = HTTP_STATUS.INTERNAL_ERROR,
     errors?: Record<string, string[]>
   ) {
     super(message);

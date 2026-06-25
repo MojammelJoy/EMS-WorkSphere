@@ -22,6 +22,15 @@ export function useLogin() {
   });
 }
 
+export function useChangePassword() {
+  return useMutation({
+    mutationFn: (data: { currentPassword: string; newPassword: string; confirmPassword: string }) =>
+      authService.changePassword(data),
+    onSuccess: () => toast.success("Password changed successfully!"),
+    onError: (err: any) => toast.error(err?.response?.data?.message ?? "Failed to change password."),
+  });
+}
+
 export function useLogout() {
   const { clearAuth } = useAuthStore();
   const navigate = useNavigate();
@@ -83,7 +92,7 @@ export function useCreateEmployee() {
   return useMutation({
     mutationFn: (data: CreateEmployeePayload) => employeeService.create(data),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["employees"] }); toast.success("Employee created!"); },
-    onError: () => toast.error("Failed to create employee."),
+    onError: (err: any) => toast.error(err?.response?.data?.message ?? "Failed to create employee."),
   });
 }
 export function useUpdateEmployee(id: string) {
@@ -105,14 +114,22 @@ export function useDeleteEmployee() {
 
 // ── Department Hooks ────────────────────────────────────────────────
 export function useDepartments(params?: PaginationParams) {
-  return useQuery({ queryKey: ["departments", params], queryFn: () => departmentService.list(params) });
+  return useQuery({ queryKey: ["departments", params], queryFn: () => departmentService.list(params) as Promise<import("@/types").Department[]> });
 }
 export function useCreateDepartment() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: CreateDepartmentPayload) => departmentService.create(data),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["departments"] }); toast.success("Department created!"); },
-    onError: () => toast.error("Failed to create department."),
+    onError: (err: any) => toast.error(err?.response?.data?.message ?? "Failed to create department."),
+  });
+}
+export function useDeleteDepartment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => departmentService.delete(id),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["departments"] }); toast.success("Department deleted."); },
+    onError: (err: any) => toast.error(err?.response?.data?.message ?? "Cannot delete department."),
   });
 }
 
@@ -142,6 +159,13 @@ export function useClockOut() {
 export function useLeaveRequests(params?: PaginationParams & { status?: string }) {
   return useQuery({ queryKey: ["leave", params], queryFn: () => leaveService.list(params) });
 }
+export function useMyLeaveBalance(employeeId?: string) {
+  return useQuery({
+    queryKey: ["leave", "balance", employeeId],
+    queryFn:  () => leaveService.getBalance(employeeId!),
+    enabled:  !!employeeId,
+  });
+}
 export function useApplyLeave() {
   const qc = useQueryClient();
   return useMutation({
@@ -155,6 +179,7 @@ export function useApproveLeave() {
   return useMutation({
     mutationFn: (id: string) => leaveService.approve(id),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["leave"] }); toast.success("Leave approved!"); },
+    onError: (err: any) => toast.error(err?.response?.data?.message ?? "Failed to approve leave."),
   });
 }
 export function useRejectLeave() {
@@ -162,6 +187,7 @@ export function useRejectLeave() {
   return useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string }) => leaveService.reject(id, reason),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["leave"] }); toast.success("Leave rejected."); },
+    onError: (err: any) => toast.error(err?.response?.data?.message ?? "Failed to reject leave."),
   });
 }
 

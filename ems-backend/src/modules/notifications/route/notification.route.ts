@@ -40,7 +40,7 @@ router.patch("/read-all", asyncHandler(async (req: AuthRequest, res) => {
 
 router.patch("/:id/read", asyncHandler(async (req: AuthRequest, res) => {
   const { default: prisma } = await import("@/lib/prisma");
-  await prisma.notification.update({ where: { id: req.params.id, userId: req.user!.userId }, data: { isRead: true } });
+  await prisma.notification.update({ where: { id: String(req.params.id), userId: req.user!.userId }, data: { isRead: true } });
   sendSuccess(res, null, "Marked as read");
 }));
 

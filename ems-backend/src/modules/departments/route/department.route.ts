@@ -21,11 +21,11 @@ router.post("/", authorize("ADMIN", "HR"), validate(createDepartmentSchema), asy
 }));
 
 router.put("/:id", authorize("ADMIN", "HR"), validate(updateDepartmentSchema), asyncHandler(async (req, res) => {
-  sendSuccess(res, await updateDepartment(req.params.id, req.body as never), "Department updated");
+  sendSuccess(res, await updateDepartment(String(req.params.id), req.body as never), "Department updated");
 }));
 
 router.delete("/:id", authorize("ADMIN"), asyncHandler(async (req, res) => {
-  await deleteDepartment(req.params.id);
+  await deleteDepartment(String(req.params.id));
   sendNoContent(res);
 }));
 

@@ -25,7 +25,7 @@ router.get("/stats", asyncHandler(async (_req, res) => {
     prisma.employee.count({ where: { status: "ON_LEAVE" } }),
     prisma.leaveRequest.count({ where: { status: "APPROVED", startDate: { lte: lastMonthEnd }, endDate: { gte: lastMonthStart } } }),
     prisma.employee.count({ where: { joiningDate: { gte: monthStart } } }),
-    prisma.department.count(),
+    prisma.department.count({ where: { isActive: true } }),
     prisma.payroll.aggregate({ where: { month: today.getMonth() + 1, year: today.getFullYear(), status: "PAID" }, _sum: { netSalary: true } }),
   ]);
 
@@ -132,8 +132,12 @@ router.get("/activities", asyncHandler(async (_req, res) => {
   const logs = await prisma.auditLog.findMany({
     orderBy: { createdAt: "desc" },
     take: 10,
-    select: { id: true, userName: true, action: true, entity: true, description: true, createdAt: true },
+    select: { id: true, userId: true, action: true, entity: true, description: true, createdAt: true },
   });
+
+  const userIds = [...new Set(logs.map((l) => l.userId))];
+  const users   = await prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, email: true } });
+  const userMap = Object.fromEntries(users.map((u) => [u.id, u.email]));
 
   const TYPE_MAP: Record<string, string> = {
     CREATE: "create", UPDATE: "update", DELETE: "delete",
@@ -142,8 +146,8 @@ router.get("/activities", asyncHandler(async (_req, res) => {
 
   const data = logs.map((l) => ({
     id:     l.id,
-    user:   l.userName,
-    action: l.description,
+    user:   userMap[l.userId] ?? l.userId,
+    action: l.description ?? l.action,
     entity: l.entity,
     time:   l.createdAt.toISOString(),
     type:   TYPE_MAP[l.action] ?? "update",
