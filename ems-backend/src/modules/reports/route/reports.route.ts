@@ -91,6 +91,7 @@ router.get("/growth-chart", asyncHandler(async (_req, res) => {
 router.get("/dept-distribution", asyncHandler(async (_req, res) => {
   const { default: prisma } = await import("@/lib/prisma");
   const depts = await prisma.department.findMany({
+    where: { isActive: true },
     select: { name: true, _count: { select: { employees: true } } },
   });
 

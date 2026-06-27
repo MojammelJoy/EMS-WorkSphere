@@ -46,9 +46,9 @@ export default function PayrollPage() {
   const { data: payrollData, isLoading } = usePayrollList({ month: Number(month), year: Number(year) });
   const payrolls = payrollData?.data ?? [];
 
-  const totalNet        = payrolls.reduce((s, p) => s + p.netSalary, 0);
-  const totalGross      = payrolls.reduce((s, p) => s + p.grossSalary, 0);
-  const totalDeductions = payrolls.reduce((s, p) => s + p.totalDeductions, 0);
+  const totalNet        = payrolls.reduce((s, p) => s + Number(p.netSalary), 0);
+  const totalGross      = payrolls.reduce((s, p) => s + Number(p.grossSalary), 0);
+  const totalDeductions = payrolls.reduce((s, p) => s + Number(p.totalDeductions), 0);
 
   return (
     <>
@@ -140,9 +140,9 @@ export default function PayrollPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-5 py-3.5 font-medium text-foreground">{formatCurrency(p.grossSalary)}</td>
-                      <td className="px-5 py-3.5 text-destructive font-medium">-{formatCurrency(p.totalDeductions)}</td>
-                      <td className="px-5 py-3.5 font-semibold text-success">{formatCurrency(p.netSalary)}</td>
+                      <td className="px-5 py-3.5 font-medium text-foreground">{formatCurrency(Number(p.grossSalary))}</td>
+                      <td className="px-5 py-3.5 text-destructive font-medium">-{formatCurrency(Number(p.totalDeductions))}</td>
+                      <td className="px-5 py-3.5 font-semibold text-success">{formatCurrency(Number(p.netSalary))}</td>
                       <td className="px-5 py-3.5"><Badge variant={STATUS_VARIANT[p.status]} dot>{PAYROLL_STATUS_LABELS[p.status]}</Badge></td>
                       <td className="px-5 py-3.5">
                         <Button variant="ghost" size="sm" onClick={() => setSelectedPayroll(p)}>
@@ -219,12 +219,12 @@ export default function PayrollPage() {
                   <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Earnings</p>
                   <div className="space-y-2">
                     {[
-                      ["Basic Salary",         selectedPayroll.basicSalary],
-                      ["House Rent",           selectedPayroll.houseRent],
-                      ["Medical Allowance",    selectedPayroll.medicalAllowance],
-                      ["Transport",            selectedPayroll.transport],
-                      ...(selectedPayroll.bonus    > 0 ? [["Bonus",    selectedPayroll.bonus]]    : []),
-                      ...(selectedPayroll.overtime > 0 ? [["Overtime", selectedPayroll.overtime]] : []),
+                      ["Basic Salary",      Number(selectedPayroll.basicSalary)],
+                      ["House Rent",        Number(selectedPayroll.houseRent)],
+                      ["Medical Allowance", Number(selectedPayroll.medicalAllowance)],
+                      ["Transport",         Number(selectedPayroll.transport)],
+                      ...(Number(selectedPayroll.bonus)          > 0 ? [["Bonus",    Number(selectedPayroll.bonus)]]          : []),
+                      ...(Number(selectedPayroll.overtimeAmount) > 0 ? [["Overtime", Number(selectedPayroll.overtimeAmount)]] : []),
                     ].map(([label, amount]) => (
                       <div key={label as string} className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">{label as string}</span>
@@ -233,7 +233,7 @@ export default function PayrollPage() {
                     ))}
                     <div className="border-t border-border pt-2 flex items-center justify-between text-sm font-semibold">
                       <span>Gross Salary</span>
-                      <span className="text-foreground">{formatCurrency(selectedPayroll.grossSalary)}</span>
+                      <span className="text-foreground">{formatCurrency(Number(selectedPayroll.grossSalary))}</span>
                     </div>
                   </div>
                 </div>
@@ -243,10 +243,10 @@ export default function PayrollPage() {
                   <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Deductions</p>
                   <div className="space-y-2">
                     {[
-                      ["Income Tax",       selectedPayroll.taxDeduction],
-                      ["Provident Fund",   selectedPayroll.providentFund],
-                      ...(selectedPayroll.loanDeduction > 0 ? [["Loan",     selectedPayroll.loanDeduction]]  : []),
-                      ...(selectedPayroll.otherDeductions > 0 ? [["Others", selectedPayroll.otherDeductions]] : []),
+                      ["Income Tax",     Number(selectedPayroll.taxDeduction)],
+                      ["Provident Fund", Number(selectedPayroll.providentFund)],
+                      ...(Number(selectedPayroll.loanDeduction)   > 0 ? [["Loan",   Number(selectedPayroll.loanDeduction)]]   : []),
+                      ...(Number(selectedPayroll.otherDeductions) > 0 ? [["Others", Number(selectedPayroll.otherDeductions)]] : []),
                     ].map(([label, amount]) => (
                       <div key={label as string} className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">{label as string}</span>
@@ -255,7 +255,7 @@ export default function PayrollPage() {
                     ))}
                     <div className="border-t border-border pt-2 flex items-center justify-between text-sm font-semibold">
                       <span>Total Deductions</span>
-                      <span className="text-destructive">-{formatCurrency(selectedPayroll.totalDeductions)}</span>
+                      <span className="text-destructive">-{formatCurrency(Number(selectedPayroll.totalDeductions))}</span>
                     </div>
                   </div>
                 </div>
@@ -265,7 +265,7 @@ export default function PayrollPage() {
               <div className="rounded-xl bg-success/10 border border-success/20 p-4 flex items-center justify-between">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-success">Net Salary</p>
-                  <p className="text-2xl font-bold text-success mt-0.5">{formatCurrency(selectedPayroll.netSalary)}</p>
+                  <p className="text-2xl font-bold text-success mt-0.5">{formatCurrency(Number(selectedPayroll.netSalary))}</p>
                 </div>
                 <Button size="sm" onClick={() => setSelectedPayroll(null)}>
                   <Download className="h-4 w-4" /> Download PDF
