@@ -17,6 +17,20 @@ services:
         generateValue: true
       - key: PORT
         value: 10000
+      - key: CLIENT_URL
+        value: https://ems-work-sphere.vercel.app
+      - key: CORS_ORIGINS
+        value: https://ems-work-sphere.vercel.app
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        value: noreply@worksphere.com
 
 databases:
   - name: worksphere-db
