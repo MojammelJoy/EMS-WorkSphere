@@ -1,0 +1,5 @@
+{
+  "buildCommand": "cd ems-frontend && npm install && npm run build",
+  "outputDirectory": "ems-frontend/dist",
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}
