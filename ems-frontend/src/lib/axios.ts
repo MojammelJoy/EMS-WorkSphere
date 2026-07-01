@@ -6,7 +6,7 @@ interface RetryConfig extends InternalAxiosRequestConfig {
 }
 
 const api = axios.create({
-  baseURL: "/api",
+  baseURL: import.meta.env.VITE_API_URL ?? "/api",
   headers: { "Content-Type": "application/json" },
   timeout: 30000,
   withCredentials: true,
@@ -34,7 +34,7 @@ api.interceptors.response.use(
       original._retry = true;
       try {
         const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
-        const { data } = await axios.post("/api/auth/refresh", { refreshToken });
+        const { data } = await axios.post(`${import.meta.env.VITE_API_URL ?? "/api"}/auth/refresh`, { refreshToken });
         const accessToken = data?.data?.accessToken ?? data?.accessToken;
         localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
         original.headers.Authorization = `Bearer ${accessToken}`;
